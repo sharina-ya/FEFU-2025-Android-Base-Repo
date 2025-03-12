@@ -1,4 +1,4 @@
-package co.feip.fefu2025.ui.theme
+package com.example.dz1android.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
