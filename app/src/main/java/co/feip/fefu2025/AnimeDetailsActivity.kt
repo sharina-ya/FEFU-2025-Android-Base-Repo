@@ -6,17 +6,17 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+
 class AnimeDetailsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_anime_details)
 
         findViewById<Button>(R.id.return_btn).setOnClickListener {
-            finish() // Закрывает текущую активити и возвращает к предыдущей
+            finish()
         }
 
         val anime = intent.getParcelableExtra<Anime>("anime") ?: return
-
         val animeImage: ImageView = findViewById(R.id.animeImage)
         val animeTitle: TextView = findViewById(R.id.animeTitle)
         val genresContainer: MyFlexBoxLayout = findViewById(R.id.genresContainer)
@@ -25,8 +25,6 @@ class AnimeDetailsActivity : AppCompatActivity() {
         val animeEpisodes: TextView = findViewById(R.id.animeEpisodes)
         val animeDescription: TextView = findViewById(R.id.animeDescription)
 
-
-
         animeImage.setImageResource(anime.imageResId)
         animeTitle.text = anime.title
         animeRating.text = anime.rating.toString()
@@ -34,10 +32,8 @@ class AnimeDetailsActivity : AppCompatActivity() {
         animeEpisodes.text = "${anime.episodes} эп."
         animeDescription.text = anime.description
 
-        // Очищаем предыдущие жанры
         genresContainer.removeAllViews()
 
-        // Добавляем жанры
         anime.genres.forEach { genre ->
             val genreView = AnimeGenreView(this)
             genreView.setGenre(genre, getRandomColor())

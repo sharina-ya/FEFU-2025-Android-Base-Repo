@@ -1,6 +1,5 @@
 package co.feip.fefu2025
 
-
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -27,8 +26,6 @@ class MainActivity : AppCompatActivity() {
                 true
             )
         )
-
-
 
         val animeList = listOf(
             Anime(
@@ -84,8 +81,6 @@ class MainActivity : AppCompatActivity() {
             intent.putExtra("anime", anime)
             startActivity(intent)
         }
-
-
 
         animeRecyclerView.adapter = adapter
     }

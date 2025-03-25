@@ -1,6 +1,5 @@
 package co.feip.fefu2025
 
-
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
@@ -29,13 +28,11 @@ class MyFlexBoxLayout @JvmOverloads constructor(
         var maxHeight = 0
         var currentLineHeight = 0
 
-        // Measure children - ИСПОЛЬЗУЕМ MarginLayoutParams для ВСЕХ детей
         val childCount = childCount
         for (i in 0 until childCount) {
             val child = getChildAt(i)
             if (child.visibility == View.GONE) continue
 
-            // Убеждаемся, что используем MarginLayoutParams
             val lp = child.layoutParams as? MarginLayoutParams ?: MarginLayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT)
             child.layoutParams = lp
 
@@ -95,7 +92,6 @@ class MyFlexBoxLayout @JvmOverloads constructor(
         }
     }
 
-    // Функция для конвертации dp в px
     fun Int.dpToPx(context: Context): Int {
         return (this * context.resources.displayMetrics.density).toInt()
     }

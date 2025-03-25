@@ -39,11 +39,8 @@ class AnimeCardAdapter(
             animeImage.setImageResource(anime.imageResId)
             animeTitle.text = anime.title
             animeRating.text = anime.rating.toString()
-
-            // Очищаем предыдущие жанры
             genresContainer.removeAllViews()
 
-            // Добавляем жанры
             anime.genres.forEach { genre ->
                 val genreView = AnimeGenreView(itemView.context)
                 genreView.setGenre(genre, getRandomColor())

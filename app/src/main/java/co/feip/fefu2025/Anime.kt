@@ -3,6 +3,7 @@ package co.feip.fefu2025
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
+
 @Parcelize
 data class Anime(
     val id: Int,

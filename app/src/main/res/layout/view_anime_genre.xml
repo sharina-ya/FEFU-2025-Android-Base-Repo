@@ -11,17 +11,4 @@
     android:includeFontPadding="false"
     android:lines="1"
     android:ellipsize="end" />
-    <!--
-    <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:padding="16dp">
 
-        <TextView
-            android:id="@+id/genreTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/white"
-            android:textSize="18sp" />
-    </FrameLayout>
-    -->

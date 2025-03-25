@@ -1,8 +1,7 @@
 package co.feip.fefu2025
 
-
 import android.content.Context
-import android.graphics.Color
+
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.TextView
@@ -24,6 +23,6 @@ class AnimeGenreView @JvmOverloads constructor(
 
     fun setGenre(name: String, color: Int) {
         genreTextView.text = name
-        genreTextView.background.setTint(color) // Изменяем только цвет, сохраняя форму
+        genreTextView.background.setTint(color)
     }
 }
