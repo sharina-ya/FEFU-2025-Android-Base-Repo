@@ -1,0 +1,12 @@
+<resources>
+
+    <style name="Widget.Theme.AppCompat.MyView" parent="">
+        <item name="android:background">@color/gray_400</item>
+        <item name="colorPrimary">@color/purple_500</item>
+    </style>
+    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <item name="queryBackground">@drawable/search_view_background</item>
+        <item name="searchHintIcon">@null</item>
+
+    </style>
+</resources>
