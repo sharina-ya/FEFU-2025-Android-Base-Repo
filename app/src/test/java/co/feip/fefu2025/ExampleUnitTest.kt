@@ -1,4 +1,4 @@
-package co.feip.fefu2025
+package com.example.animegenres
 
 import org.junit.Test
 
