@@ -1,4 +1,4 @@
-package co.feip.fefu2025
+package co.feip.fefu2025.presentation.components
 
 import android.graphics.Rect
 import android.view.View

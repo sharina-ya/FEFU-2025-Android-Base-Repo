@@ -1,5 +1,4 @@
-package co.feip.fefu2025
-
+package co.feip.fefu2025.presentation.components
 
 import android.content.Context
 import android.graphics.Color
@@ -9,11 +8,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import co.feip.fefu2025.ui.components.RatingBarChart
+import co.feip.fefu2025.R
+import co.feip.fefu2025.domain.model.Anime
 
 class AnimeCardAdapter(
     private val context: Context,
-    private val animeList: List<Anime>,
+    private var animeList: List<Anime>,
     private val onItemClick: (Anime) -> Unit
 ) : RecyclerView.Adapter<AnimeCardAdapter.AnimeViewHolder>() {
 
@@ -30,17 +30,23 @@ class AnimeCardAdapter(
 
     override fun getItemCount(): Int = animeList.size
 
+    fun updateData(newList: List<Anime>) {
+        animeList = newList
+        notifyDataSetChanged()
+    }
+
     class AnimeViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val animeImage: ImageView = itemView.findViewById(R.id.animeImage)
         private val animeTitle: TextView = itemView.findViewById(R.id.animeTitle)
-        private val genresContainer: MyFlexBoxLayout = itemView.findViewById(R.id.genresContainer)
         private val animeRating: TextView = itemView.findViewById(R.id.animeRating)
+        private val genresContainer: MyFlexBoxLayout = itemView.findViewById(R.id.genresContainer)
 
         fun bind(anime: Anime) {
             animeImage.setImageResource(anime.imageResId)
             animeTitle.text = anime.title
             animeRating.text = anime.rating.toString()
             genresContainer.removeAllViews()
+
 
             anime.genres.forEach { genre ->
                 val genreView = AnimeGenreView(itemView.context)

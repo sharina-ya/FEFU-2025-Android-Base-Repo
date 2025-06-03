@@ -1,57 +1,19 @@
-package co.feip.fefu2025
+package co.feip.fefu2025.domain.usecase
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.appbar.MaterialToolbar
+import co.feip.fefu2025.R
 
-class MainActivity : AppCompatActivity() {
+//package co.feip.fefu2025.domain
 
-    private lateinit var animeRecyclerView: RecyclerView
+import co.feip.fefu2025.domain.model.Anime
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+class GetAnimeListUseCase {
 
-        // Инициализация RecyclerView
-        animeRecyclerView = findViewById(R.id.animeRecyclerView)
-        setupAnimeList()
-
-        // Настройка Toolbar
-        val toolbar: MaterialToolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-
-        // Настройка SearchView
-        val searchView: SearchView = findViewById(R.id.searchView)
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                return false
-            }
-        })
-    }
-
-    private fun setupAnimeList() {
-        animeRecyclerView.layoutManager = GridLayoutManager(this, 2)
-        animeRecyclerView.addItemDecoration(
-            GridSpacingItemDecoration(
-                2,
-                resources.getDimensionPixelSize(R.dimen.grid_spacing),
-                true
-            )
-        )
-
-        val animeList = listOf(
+    fun execute(): List<Anime> {
+        return listOf(
             Anime(
                 id = 1,
                 title = "Наруто",
-                description = "История о юном ниндзя...",
+                description = "За 12 лет до начала событий...",
                 genres = listOf("Экшен", "Приключения", "Комедия"),
                 rating = 8.5,
                 year = 2002,
@@ -105,13 +67,5 @@ class MainActivity : AppCompatActivity() {
                 )
             )
         )
-
-        val adapter = AnimeCardAdapter(this, animeList) { anime ->
-            val intent = Intent(this, AnimeDetailsActivity::class.java)
-            intent.putExtra("anime", anime)
-            startActivity(intent)
-        }
-
-        animeRecyclerView.adapter = adapter
     }
 }

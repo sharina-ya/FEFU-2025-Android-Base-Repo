@@ -1,44 +1,54 @@
-package co.feip.fefu2025
+package co.feip.fefu2025.presentation.animeDetails
 
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
-import android.widget.LinearLayout
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.setMargins
-import androidx.recyclerview.widget.LinearLayoutManager
-import co.feip.fefu2025.databinding.ActivityAnimeDetailsBinding
-import androidx.core.content.ContextCompat
 import android.view.Gravity
 import android.view.View
-
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.view.setMargins
+import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.LinearLayoutManager
+import co.feip.fefu2025.domain.model.Anime
+import co.feip.fefu2025.R
+import co.feip.fefu2025.databinding.ActivityAnimeDetailsBinding
+import co.feip.fefu2025.presentation.components.AnimeCardAdapter
+import co.feip.fefu2025.presentation.components.AnimeGenreView
 
 class AnimeDetailsActivity : AppCompatActivity() {
 
-
     private lateinit var binding: ActivityAnimeDetailsBinding
+    private val viewModel: AnimeDetailsViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAnimeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Инициализация данных аниме
-        val anime = intent.getParcelableExtra<Anime>("anime") ?: run {
+        // Получаем аниме из интента и передаём в ViewModel
+        val animeFromIntent = intent.getParcelableExtra<Anime>("anime")
+        if (animeFromIntent == null) {
             finish()
             return
         }
+        viewModel.loadAnimeDetails(animeFromIntent)
 
-        setupUI(anime)
-        setupRatingChart(anime) // Передаем аниме с его рейтингами
-        setupRecommendations()
+        // Подписываемся на данные из ViewModel
+        viewModel.anime.observe(this, Observer { anime ->
+            setupUI(anime)
+            setupRatingChart(anime)
+            setupRecommendations()
+        })
+
+        binding.returnBtn.setOnClickListener { finish() }
     }
 
     private fun setupUI(anime: Anime) {
-        // 1. Настройка основных данных
         with(binding) {
-            returnBtn.setOnClickListener { finish() }
             animeImage.setImageResource(anime.imageResId)
             animeTitle.text = anime.title
             animeRating.text = anime.rating.toString()
@@ -46,7 +56,6 @@ class AnimeDetailsActivity : AppCompatActivity() {
             animeEpisodes.text = "${anime.episodes} эп."
             animeDescription.text = anime.description
 
-            // Очистка и добавление жанров
             genresContainer.removeAllViews()
             anime.genres.forEach { genre ->
                 AnimeGenreView(this@AnimeDetailsActivity).apply {
@@ -55,17 +64,10 @@ class AnimeDetailsActivity : AppCompatActivity() {
                 }
             }
         }
-
-        // 2. Настройка графика рейтинга
-        setupRatingChart(anime)
-
-        // 3. Настройка рекомендаций
-        setupRecommendations()
     }
 
     private fun setupRatingChart(anime: Anime) {
         val ratings = anime.ratingsDistribution.ifEmpty {
-            // Дефолтные значения, если рейтинги не заданы
             mapOf(
                 1 to 100, 2 to 50, 3 to 200, 4 to 300, 5 to 450,
                 6 to 600, 7 to 800, 8 to 700, 9 to 400, 10 to 500
@@ -80,7 +82,6 @@ class AnimeDetailsActivity : AppCompatActivity() {
         labelsContainer.removeAllViews()
 
         ratings.entries.sortedBy { it.key }.forEach { (rating, count) ->
-            // Столбец диаграммы
             View(this).apply {
                 layoutParams = LinearLayout.LayoutParams(
                     0,
@@ -91,7 +92,6 @@ class AnimeDetailsActivity : AppCompatActivity() {
                 chartContainer.addView(this)
             }
 
-            // Подпись
             TextView(this).apply {
                 text = rating.toString()
                 gravity = Gravity.CENTER
@@ -107,7 +107,7 @@ class AnimeDetailsActivity : AppCompatActivity() {
     }
 
     private fun setupRecommendations() {
-        // Создаем тестовые данные (замените на реальные)
+
         val recommendations = listOf(
             Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
                 1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
@@ -146,13 +146,9 @@ class AnimeDetailsActivity : AppCompatActivity() {
                 6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
             )),
 
-
-
-            // Добавьте еще 8 элементов
-        )
+            )
 
         binding.recommendationsRecyclerView.apply {
-            // Передаем контекст (this@AnimeDetailsActivity), список и обработчик клика
             adapter = AnimeCardAdapter(
                 context = this@AnimeDetailsActivity,
                 animeList = recommendations,
@@ -163,16 +159,10 @@ class AnimeDetailsActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
             )
-            layoutManager = LinearLayoutManager(
-                this@AnimeDetailsActivity,
-                LinearLayoutManager.HORIZONTAL,
-                false
-            )
+            layoutManager = LinearLayoutManager(this@AnimeDetailsActivity, LinearLayoutManager.HORIZONTAL, false)
             setHasFixedSize(true)
         }
     }
-
-
 
     private fun getRandomColor(): Int {
         return listOf(

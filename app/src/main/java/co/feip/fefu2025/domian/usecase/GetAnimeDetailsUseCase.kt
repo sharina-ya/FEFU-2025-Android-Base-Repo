@@ -1,0 +1,9 @@
+package co.feip.fefu2025.domain.usecase
+
+import co.feip.fefu2025.domain.model.Anime
+
+class GetAnimeDetailsUseCase {
+    fun execute(anime: Anime): Anime {
+        return anime
+    }
+}
