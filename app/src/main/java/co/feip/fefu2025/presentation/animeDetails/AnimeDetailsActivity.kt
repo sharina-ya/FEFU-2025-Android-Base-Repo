@@ -2,6 +2,7 @@ package co.feip.fefu2025.presentation.animeDetails
 
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
@@ -13,9 +14,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.setMargins
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
-import co.feip.fefu2025.domain.model.Anime
 import co.feip.fefu2025.R
 import co.feip.fefu2025.databinding.ActivityAnimeDetailsBinding
+import co.feip.fefu2025.domain.model.Anime
+import co.feip.fefu2025.domain.repository.AnimeRepository
 import co.feip.fefu2025.presentation.components.AnimeCardAdapter
 import co.feip.fefu2025.presentation.components.AnimeGenreView
 
@@ -29,15 +31,33 @@ class AnimeDetailsActivity : AppCompatActivity() {
         binding = ActivityAnimeDetailsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Получаем аниме из интента и передаём в ViewModel
-        val animeFromIntent = intent.getParcelableExtra<Anime>("anime")
-        if (animeFromIntent == null) {
-            finish()
-            return
+        // Обработка deep link: mysuperapp://anime/{id}
+        val dataUri: Uri? = intent?.data
+        if (dataUri != null) {
+            val idString = dataUri.lastPathSegment
+            val animeId = idString?.toIntOrNull()
+            if (animeId != null) {
+                val anime = AnimeRepository.getAnimeById(animeId)
+                if (anime != null) {
+                    viewModel.loadAnimeDetails(anime)
+                } else {
+                    finish()
+                    return
+                }
+            } else {
+                finish()
+                return
+            }
+        } else {
+            // Обычный запуск с передачей Parcelable
+            val animeFromIntent = intent.getParcelableExtra<Anime>("anime")
+            if (animeFromIntent == null) {
+                finish()
+                return
+            }
+            viewModel.loadAnimeDetails(animeFromIntent)
         }
-        viewModel.loadAnimeDetails(animeFromIntent)
 
-        // Подписываемся на данные из ViewModel
         viewModel.anime.observe(this, Observer { anime ->
             setupUI(anime)
             setupRatingChart(anime)
@@ -107,46 +127,11 @@ class AnimeDetailsActivity : AppCompatActivity() {
     }
 
     private fun setupRecommendations() {
-
         val recommendations = listOf(
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-            Anime(1, "Хуевое аниме", "хуйня", listOf("Боевик"), 9.0, 1999, 12, R.drawable.aot, ratingsDistribution = mapOf(
-                1 to 10, 2 to 15, 3 to 30, 4 to 50, 5 to 100,
-                6 to 300, 7 to 600, 8 to 900, 9 to 1200, 10 to 1500
-            )),
-
-            )
+            Anime(1, "Наруто", "Описание...", listOf("Экшен"), 8.5, 2002, 220, R.drawable.naruto, mapOf(1 to 50)),
+            Anime(2, "Маг целитель", "Описание...", listOf("Драма"), 9.0, 2022, 12, R.drawable.aot, mapOf(1 to 20)),
+            Anime(3, "Blue lock", "Описание...", listOf("Спорт"), 8.7, 2022, 24, R.drawable.bluelock, mapOf(1 to 10))
+        )
 
         binding.recommendationsRecyclerView.apply {
             adapter = AnimeCardAdapter(
