@@ -34,7 +34,7 @@
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
-            <co.feip.fefu2025.MyFlexBoxLayout
+            <co.feip.fefu2025.presentation.components.MyFlexBoxLayout
                 android:id="@+id/genresContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
