@@ -1,26 +1,20 @@
 package co.feip.fefu2025.presentation.animeList
 
-import co.feip.fefu2025.domain.usecase.GetAnimeListUseCase
-
-
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import co.feip.fefu2025.data.repository.MockAnimeRepository
 import co.feip.fefu2025.domain.model.Anime
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-class AnimeListViewModel(
-    private val getAnimeListUseCase: GetAnimeListUseCase = GetAnimeListUseCase()
-) : ViewModel() {
-
-    private val _animeList = MutableLiveData<List<Anime>>()
-    val animeList: LiveData<List<Anime>> = _animeList
+class AnimeListViewModel : ViewModel() {
+    private val _animeList = MutableStateFlow<List<Anime>>(emptyList())
+    val animeList: StateFlow<List<Anime>> = _animeList
 
     init {
-        loadAnimeList()
-    }
-
-    private fun loadAnimeList() {
-        val list = getAnimeListUseCase.execute()
-        _animeList.value = list
+        viewModelScope.launch {
+            _animeList.value = MockAnimeRepository.getAnimeList()
+        }
     }
 }

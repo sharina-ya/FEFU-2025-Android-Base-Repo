@@ -1,20 +1,16 @@
 package co.feip.fefu2025.presentation.animeDetails
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import co.feip.fefu2025.data.repository.MockAnimeRepository
 import co.feip.fefu2025.domain.model.Anime
-import co.feip.fefu2025.domain.usecase.GetAnimeDetailsUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
-class AnimeDetailsViewModel(
-    private val getAnimeDetailsUseCase: GetAnimeDetailsUseCase = GetAnimeDetailsUseCase()
-) : ViewModel() {
+class AnimeDetailsViewModel : ViewModel() {
+    private val _anime = MutableStateFlow<Anime?>(null)
+    val anime: StateFlow<Anime?> = _anime
 
-    private val _anime = MutableLiveData<Anime>()
-    val anime: LiveData<Anime> = _anime
-
-    fun loadAnimeDetails(anime: Anime) {
-        val details = getAnimeDetailsUseCase.execute(anime)
-        _anime.value = details
+    fun loadAnimeById(id: Int) {
+        _anime.value = MockAnimeRepository.getAnimeById(id)
     }
 }

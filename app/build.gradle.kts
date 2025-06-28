@@ -90,4 +90,30 @@ dependencies {
     implementation ("androidx.cardview:cardview:1.0.0")
     implementation ("com.google.android.material:material:1.6.0")
     implementation ("androidx.compose.foundation:foundation:1.4.0")
+    // Jetpack Compose BOM (лучше использовать BOM для согласованных версий)
+
+
+// Основные библиотеки Compose
+    implementation ("androidx.compose.ui:ui")
+    implementation ("androidx.compose.material:material")
+    implementation ("androidx.compose.material:material-icons-extended")
+    implementation ("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation ("androidx.compose.ui:ui-tooling")
+
+// Navigation Compose
+    implementation ("androidx.navigation:navigation-compose:2.7.7")
+
+// Lifecycle ViewModel для Compose
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+
+// Activity для Compose
+    implementation ("androidx.activity:activity-compose:1.8.2")
+
+// Если используешь Material3
+    implementation ("androidx.compose.material3:material3")
+
+// Для LiveData observeAsState
+    implementation ("androidx.compose.runtime:runtime-livedata")
+    implementation ("com.google.accompanist:accompanist-flowlayout:0.34.0")
+
 }
