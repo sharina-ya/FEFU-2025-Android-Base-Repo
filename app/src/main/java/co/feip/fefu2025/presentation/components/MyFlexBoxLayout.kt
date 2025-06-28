@@ -1,10 +1,9 @@
-package co.feip.fefu2025
+package co.feip.fefu2025.presentation.components
 
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
-import java.util.Collections.max
 import kotlin.math.max
 
 class MyFlexBoxLayout @JvmOverloads constructor(

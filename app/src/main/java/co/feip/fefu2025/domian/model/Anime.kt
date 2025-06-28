@@ -1,5 +1,4 @@
-package co.feip.fefu2025
-
+package co.feip.fefu2025.domain.model
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 

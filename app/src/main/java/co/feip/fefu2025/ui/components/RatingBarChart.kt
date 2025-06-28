@@ -12,13 +12,13 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun RatingBarChart(
-    ratings: Map<Int, Int>, // Key: Оценка (1-10), Value: Количество пользователей
+    ratings: Map<Int, Int>,
     modifier: Modifier = Modifier
 ) {
     val maxCount = ratings.values.maxOrNull() ?: 1
 
     Column(modifier = modifier) {
-        Text("Распределение оценок", modifier = Modifier.padding(bottom = 8.dp))
+        Text("Оценки пользователей", modifier = Modifier.padding(bottom = 8.dp))
         Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.Bottom,
