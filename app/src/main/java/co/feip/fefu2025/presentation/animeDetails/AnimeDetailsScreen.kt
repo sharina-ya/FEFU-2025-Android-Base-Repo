@@ -17,14 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import co.feip.fefu2025.data.repository.MockAnimeRepository
 import co.feip.fefu2025.domain.model.Anime
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.verticalScroll
-
-import co.feip.fefu2025.presentation.animeList.AnimeListScreen
 import co.feip.fefu2025.presentation.components.GenreChip
-
 @Composable
 fun AnimeDetailsScreen(
     animeId: Int,
@@ -32,12 +28,51 @@ fun AnimeDetailsScreen(
     onBack: () -> Unit,
     viewModel: AnimeDetailsViewModel = viewModel()
 ) {
-    val anime = remember(animeId) { MockAnimeRepository.getAnimeById(animeId) }
-    if (anime == null) {
-        Text("Аниме не найдено")
-        return
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(animeId) {
+        viewModel.loadAnimeById(animeId)
     }
 
+    when (uiState) {
+        is UiState.Loading -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        is UiState.Error -> {
+            val message = (uiState as UiState.Error).message
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = message)
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { viewModel.loadAnimeById(animeId) }) {
+                        Text("Повторить")
+                    }
+                }
+            }
+        }
+        is UiState.Success -> {
+            val anime = (uiState as UiState.Success<Anime?>).data
+            if (anime == null) {
+                Text("Аниме не найдено")
+            } else {
+
+                AnimeDetailsContent(anime, onAnimeClick, onBack)
+            }
+        }
+
+
+    }
+}
+
+
+@Composable
+fun AnimeDetailsContent(
+    anime: Anime,
+    onAnimeClick: (Int) -> Unit,
+    onBack: () -> Unit
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -73,6 +108,7 @@ fun AnimeDetailsScreen(
         RatingChart(anime)
         Spacer(Modifier.height(24.dp))
         Text("Может понравиться:", style = MaterialTheme.typography.titleMedium)
+        // Передаём onAnimeClick сюда
         AnimeRecommendationsSection(currentAnimeId = anime.id, onAnimeClick = onAnimeClick)
     }
 }
@@ -113,7 +149,7 @@ fun AnimeRecommendationsSection(
     currentAnimeId: Int,
     onAnimeClick: (Int) -> Unit
 ) {
-    val animeList = remember { MockAnimeRepository.getAnimeList() }
+    val animeList = remember { co.feip.fefu2025.data.repository.MockAnimeRepository.animeList }
     val recommendations = remember(animeList, currentAnimeId) {
         animeList.filter { it.id != currentAnimeId }.shuffled().take(10)
     }

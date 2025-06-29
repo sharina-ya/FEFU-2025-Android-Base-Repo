@@ -115,5 +115,7 @@ dependencies {
 // Для LiveData observeAsState
     implementation ("androidx.compose.runtime:runtime-livedata")
     implementation ("com.google.accompanist:accompanist-flowlayout:0.34.0")
+    implementation ("androidx.compose.runtime:runtime:1.6.1")
+    implementation ("androidx.compose.material3:material3:1.1.1")
 
 }

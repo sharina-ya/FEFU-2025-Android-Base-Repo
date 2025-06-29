@@ -3,10 +3,11 @@ package co.feip.fefu2025.data.repository
 import co.feip.fefu2025.domain.model.Anime
 import co.feip.fefu2025.R
 import co.feip.fefu2025.domain.repository.AnimeRepository
-
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 object MockAnimeRepository : AnimeRepository {
 
-    private val animeList = listOf(
+    val animeList = listOf(
         Anime(
             id = 1,
             title = "Наруто",
@@ -110,6 +111,31 @@ object MockAnimeRepository : AnimeRepository {
             )
         )
     )
-    override fun getAnimeList(): List<Anime> = animeList
-    override fun getAnimeById(id: Int): Anime? = animeList.find { it.id == id }
+    //override fun getAnimeList(): List<Anime> = animeList
+    //override fun getAnimeById(id: Int): Anime? = animeList.find { it.id == id }
+
+    private fun shouldThrowError(): Boolean = Random.nextFloat() < 0.3f
+
+    override suspend fun getAnimeList(): List<Anime> {
+        delay(3000)
+        if (shouldThrowError()) {
+            throw Exception("Ошибка загрузки списка аниме")
+        }
+        return animeList
+    }
+
+    override suspend fun getAnimeById(id: Int): Anime? {
+        delay(2000)
+        if (shouldThrowError()) {
+            throw Exception("Ошибка загрузки деталей аниме")
+        }
+        return animeList.find { it.id == id }
+    }
+    suspend fun searchAnime(query: String): List<Anime> {
+        delay(1000) 
+        if (shouldThrowError()) throw Exception("Ошибка поиска")
+        if (query.isBlank()) return emptyList()
+        return animeList.filter { it.title.contains(query, ignoreCase = true) }
+    }
+
 }

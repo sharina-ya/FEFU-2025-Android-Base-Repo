@@ -12,34 +12,71 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import co.feip.fefu2025.domain.model.Anime
 import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.Image
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
+import co.feip.fefu2025.presentation.components.GenreChip
+import androidx.compose.ui.Alignment
+import co.feip.fefu2025.presentation.search.SearchViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.material3.TopAppBar
+
+
 @Composable
+
 fun AnimeListScreen(
     onAnimeClick: (Int) -> Unit,
+    onSearchClick: () -> Unit,
     viewModel: AnimeListViewModel = viewModel()
 ) {
-    val animeList by viewModel.animeList.collectAsState()
-    var searchQuery by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
 
-    Column(Modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            label = { Text("Поиск") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-        )
-        LazyColumn {
-            items(animeList.filter {
-                it.title.contains(searchQuery, true) ||
-                        it.genres.any { g -> g.contains(searchQuery, true) } ||
-                        it.description.contains(searchQuery, true)
-            }) { anime ->
-                AnimeCard(anime = anime, onClick = { onAnimeClick(anime.id) })
+    when (uiState) {
+        is UiState.Loading -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        is UiState.Error -> {
+            val message = (uiState as UiState.Error).message
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = message)
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { viewModel.loadAnimeList() }) {
+                        Text("Повторить")
+                    }
+                }
+            }
+        }
+        is UiState.Success -> {
+            val animeList = (uiState as UiState.Success<List<Anime>>).data
+            Column(Modifier.fillMaxSize()) {
+                OutlinedTextField(
+                    value = "",
+                    onValueChange = {},
+                    label = { Text("Поиск") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                        .clickable { onSearchClick() },
+                    enabled = false, // запрещаем ввод, чтобы поле было "только для открытия"
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = "Поиск")
+                    }
+                )
+                LazyColumn {
+                    items(animeList) { anime ->
+                        AnimeCard(anime = anime, onClick = { onAnimeClick(anime.id) })
+                    }
+                }
             }
         }
     }
 }
+
+
 
 @Composable
 fun AnimeCard(anime: Anime, onClick: () -> Unit) {
@@ -74,6 +111,7 @@ fun AnimeCard(anime: Anime, onClick: () -> Unit) {
     }
 }
 
+
 @Composable
 fun GenreChip(genre: String) {
     Surface(
@@ -88,3 +126,73 @@ fun GenreChip(genre: String) {
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchScreen(
+    onBack: () -> Unit,
+    onAnimeClick: (Int) -> Unit,
+    viewModel: SearchViewModel = viewModel()
+) {
+    var query by remember { mutableStateOf("") }
+    val uiState by viewModel.uiState.collectAsState()
+
+    LaunchedEffect(query) {
+        viewModel.search(query)
+    }
+
+    Column(Modifier.fillMaxSize()) {
+        TopAppBar(
+            title = { Text("Поиск аниме") },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+                }
+            }
+        )
+
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text("Введите название") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        )
+
+        when (uiState) {
+            is UiState.Loading -> {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            is UiState.Error -> {
+                val message = (uiState as UiState.Error).message
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(message)
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = { viewModel.search(query) }) {
+                            Text("Повторить")
+                        }
+                    }
+                }
+            }
+            is UiState.Success<*> -> {
+                val results = (uiState as UiState.Success<List<Anime>>).data
+                if (results.isEmpty()) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("Результаты отсутствуют")
+                    }
+                } else {
+                    LazyColumn {
+                        items(results) { anime ->
+                            AnimeCard(anime = anime, onClick = { onAnimeClick(anime.id) })
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

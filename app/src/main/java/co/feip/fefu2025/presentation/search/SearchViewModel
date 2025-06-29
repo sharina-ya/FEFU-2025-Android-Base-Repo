@@ -1,0 +1,34 @@
+package co.feip.fefu2025.presentation.search
+
+
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import co.feip.fefu2025.data.repository.MockAnimeRepository
+import co.feip.fefu2025.domain.model.Anime
+import co.feip.fefu2025.presentation.animeList.UiState
+
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+
+class SearchViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow<UiState<List<Anime>>>(UiState.Success(emptyList()))
+    val uiState: StateFlow<UiState<List<Anime>>> = _uiState
+
+    fun search(query: String) {
+        if (query.isBlank()) {
+            _uiState.value = UiState.Success(emptyList())
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+            try {
+                val results = MockAnimeRepository.searchAnime(query)
+                _uiState.value = UiState.Success(results)
+            } catch (e: Exception) {
+                _uiState.value = UiState.Error(e.message ?: "Ошибка поиска")
+            }
+        }
+    }
+}
