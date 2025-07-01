@@ -19,13 +19,25 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import co.feip.fefu2025.domain.model.Anime
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.verticalScroll
+import co.feip.fefu2025.presentation.animeList.AnimeCard
+
 import co.feip.fefu2025.presentation.components.GenreChip
+
+import coil.compose.AsyncImage
+import androidx.lifecycle.viewmodel.compose.viewModel
+import co.feip.fefu2025.presentation.animeList.AnimeListViewModel
+import co.feip.fefu2025.presentation.animeList.UiState
+
+import co.feip.fefu2025.presentation.animeList.RecommendationsViewModel
+
 @Composable
 fun AnimeDetailsScreen(
     animeId: Int,
     onAnimeClick: (Int) -> Unit,
     onBack: () -> Unit,
+    onRecommendationsClick: (Int) -> Unit,
     viewModel: AnimeDetailsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,13 +55,7 @@ fun AnimeDetailsScreen(
         is UiState.Error -> {
             val message = (uiState as UiState.Error).message
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(text = message)
-                    Spacer(Modifier.height(8.dp))
-                    Button(onClick = { viewModel.loadAnimeById(animeId) }) {
-                        Text("Повторить")
-                    }
-                }
+                Text("Ошибка: $message", color = Color.Red)
             }
         }
         is UiState.Success -> {
@@ -57,21 +63,22 @@ fun AnimeDetailsScreen(
             if (anime == null) {
                 Text("Аниме не найдено")
             } else {
-
-                AnimeDetailsContent(anime, onAnimeClick, onBack)
+                AnimeDetailsContent(anime, onAnimeClick, onBack, onRecommendationsClick)
             }
         }
-
-
+        else -> {}
     }
 }
+
+
 
 
 @Composable
 fun AnimeDetailsContent(
     anime: Anime,
     onAnimeClick: (Int) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onRecommendationsClick: (Int) -> Unit
 ) {
     Column(
         Modifier
@@ -83,13 +90,28 @@ fun AnimeDetailsContent(
             Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(
-                painter = painterResource(id = anime.imageResId),
-                contentDescription = anime.title,
-                modifier = Modifier
-                    .size(140.dp)
-                    .padding(end = 16.dp)
-            )
+            if (anime.imageResId != 0) {
+                Image(
+                    painter = painterResource(id = anime.imageResId),
+                    contentDescription = anime.title,
+                    modifier = Modifier.size(140.dp).padding(end = 16.dp)
+                )
+            } else if (anime.imageUrl.isNotBlank()) {
+                AsyncImage(
+                    model = anime.imageUrl,
+                    contentDescription = anime.title,
+                    modifier = Modifier.size(140.dp).padding(end = 16.dp)
+                )
+            } else {
+                // Можно отобразить заглушку или ничего
+                Box(
+                    modifier = Modifier
+                        .size(140.dp)
+                        .padding(end = 16.dp)
+                        .background(Color.Gray)
+                )
+            }
+
             Column {
                 Text(anime.title, style = MaterialTheme.typography.headlineSmall)
                 Text("Год: ${anime.year}, Серий: ${anime.episodes}")
@@ -107,11 +129,17 @@ fun AnimeDetailsContent(
         Spacer(Modifier.height(16.dp))
         RatingChart(anime)
         Spacer(Modifier.height(24.dp))
-        Text("Может понравиться:", style = MaterialTheme.typography.titleMedium)
-        // Передаём onAnimeClick сюда
-        AnimeRecommendationsSection(currentAnimeId = anime.id, onAnimeClick = onAnimeClick)
+        Text(
+            "Может понравиться:",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .clickable { onRecommendationsClick(anime.id) }
+                .padding(vertical = 8.dp)
+        )
+
     }
 }
+
 
 @Composable
 fun RatingChart(anime: Anime) {
@@ -144,35 +172,55 @@ fun RatingChart(anime: Anime) {
     }
 }
 
+// Этот код остается таким же
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnimeRecommendationsSection(
-    currentAnimeId: Int,
-    onAnimeClick: (Int) -> Unit
+fun RecommendationsScreen(
+    onAnimeClick: (Int) -> Unit,
+    onBack: () -> Unit,
+    viewModel: RecommendationsViewModel = viewModel() // Используем новый ViewModel
 ) {
-    val animeList = remember { co.feip.fefu2025.data.repository.MockAnimeRepository.animeList }
-    val recommendations = remember(animeList, currentAnimeId) {
-        animeList.filter { it.id != currentAnimeId }.shuffled().take(10)
-    }
-    LazyRow {
-        items(recommendations) { anime ->
-            Card(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .width(180.dp)
-                    .height(220.dp)
-                    .clickable { onAnimeClick(anime.id) },
-                elevation = CardDefaults.cardElevation(4.dp)
+    val uiState by viewModel.uiState.collectAsState()
+
+    // LaunchedEffect(Unit) не нужен, так как init{} в ViewModel уже вызывает загрузку
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Все аниме") }, // Можно изменить заголовок
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        when (uiState) {
+            is UiState.Loading -> Box(
+                Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
             ) {
-                Column(Modifier.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        painter = painterResource(id = anime.imageResId),
-                        contentDescription = anime.title,
-                        modifier = Modifier.size(90.dp)
-                    )
-                    Text(anime.title, style = MaterialTheme.typography.titleSmall)
-                    Text("Рейтинг: ${anime.rating}", style = MaterialTheme.typography.bodySmall)
+                CircularProgressIndicator()
+            }
+            is UiState.Error -> Box(
+                Modifier.fillMaxSize().padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Ошибка: ${(uiState as UiState.Error).message}", color = Color.Red)
+            }
+            is UiState.Success -> {
+                val allAnime = (uiState as UiState.Success<List<Anime>>).data
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    items(allAnime) { anime ->
+                        AnimeCard(anime = anime, onClick = { onAnimeClick(anime.id) })
+                    }
                 }
             }
+            else -> {}
         }
     }
 }

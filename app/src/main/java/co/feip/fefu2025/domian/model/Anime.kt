@@ -12,6 +12,7 @@ data class Anime(
     val rating: Double,
     val year: Int,
     val episodes: Int,
-    val imageResId: Int,
-    val ratingsDistribution: Map<Int, Int> = emptyMap() // 1-10: количество оценок
+    val imageResId: Int, // локальный ресурс, можно оставить или убрать
+    val imageUrl: String, // добавь это поле для URL картинки
+    val ratingsDistribution: Map<Int, Int> = emptyMap()
 ) : Parcelable

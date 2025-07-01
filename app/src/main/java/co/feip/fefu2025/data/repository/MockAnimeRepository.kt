@@ -2,21 +2,71 @@ package co.feip.fefu2025.data.repository
 
 import co.feip.fefu2025.domain.model.Anime
 import co.feip.fefu2025.R
+import co.feip.fefu2025.data.repository.MockAnimeRepository.animeList
 import co.feip.fefu2025.domain.repository.AnimeRepository
 import kotlinx.coroutines.delay
 import kotlin.random.Random
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Query
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+import retrofit2.http.Path
+
 object MockAnimeRepository : AnimeRepository {
+
+    override suspend fun getAnimeDetailsById(id: Int): Anime? {
+        return try {
+            val response = JikanApi.service.getAnimeDetails(id)
+            val dto = response.data
+
+            // Найдём моковые данные по id или названию
+            val mockAnime = animeList.find { it.id == id || it.title == dto.title }
+
+            // Собираем жанры из API
+            val genresFromApi = dto.genres?.map { it.name } ?: emptyList()
+
+            Anime(
+                id = dto.malId,
+                title = dto.title,
+                description = dto.synopsis ?: mockAnime?.description.orEmpty(),
+                genres = if (genresFromApi.isNotEmpty()) genresFromApi else (mockAnime?.genres ?: emptyList()),
+                rating = dto.score ?: mockAnime?.rating ?: 0.0,
+                year = dto.year ?: mockAnime?.year ?: 0,
+                episodes = dto.episodes ?: mockAnime?.episodes ?: 0,
+                imageResId = mockAnime?.imageResId ?: 0,
+                imageUrl = dto.images.jpg.imageUrl ?: mockAnime?.imageUrl.orEmpty(),
+                ratingsDistribution = mockAnime?.ratingsDistribution ?: emptyMap()
+            )
+        } catch (e: Exception) {
+            // В случае ошибки возвращаем моковые данные
+            animeList.find { it.id == id }
+        }
+    }
+
+    override suspend fun searchAnime(query: String, page: Int, pageSize: Int): List<Anime> {
+        val popularList = getPopularAnime(1) // или загрузить все популярные, если есть кэш
+        val filtered = popularList.filter { it.title.contains(query, ignoreCase = true) }
+        val fromIndex = (page - 1) * pageSize
+        if (fromIndex >= filtered.size) return emptyList()
+        val toIndex = minOf(fromIndex + pageSize, filtered.size)
+        return filtered.subList(fromIndex, toIndex)
+    }
+
+
 
     val animeList = listOf(
         Anime(
             id = 1,
             title = "Наруто",
-            description = "Главный герой — Наруто Узумаки, который мечтает стать Хокаге — признанным лидером своей деревни Коноха. Внутри него запечатан девятихвостый демон-лис, из-за чего герой с детства сталкивается с отвержением. Чтобы добиться уважения окружающих, Наруто предстоит пройти через тысячи препятствий: экзамены ниндзя, различные миссии и сражения.",
+            description = "Главный герой — Наруто Узумаки...",
             genres = listOf("Экшен", "Приключения", "Комедия"),
             rating = 8.5,
             year = 2002,
             episodes = 220,
             imageResId = R.drawable.naruto,
+            imageUrl = "", // Можно оставить пустым для локального изображения
             ratingsDistribution = mapOf(
                 1 to 50, 2 to 30, 3 to 100, 4 to 200, 5 to 300,
                 6 to 500, 7 to 800, 8 to 1200, 9 to 900, 10 to 600
@@ -25,99 +75,24 @@ object MockAnimeRepository : AnimeRepository {
         Anime(
             id = 2,
             title = "Маг целитель",
-            description = "Когда Кэяру получил способность исцелять любого независимо от серьезности ран, казалось, что его ждет великое будущее. Но вместо этого он годами подвергался адским пыткам и издевательствам. Исцеляющие навыки Кэяру позволяли ему тайно собирать воспоминания и способности тех, кого он лечил, и постепенно делали его сильнее. Но к тому времени, когда он полностью раскрыл свой потенциал, было слишком поздно — он уже все потерял.",
+            description = "Когда Кэяру получил способность исцелять...",
             genres = listOf("Романтика", "Драма", "Комедия"),
             rating = 9.0,
             year = 2022,
             episodes = 12,
             imageResId = R.drawable.aot,
+            imageUrl = "",
             ratingsDistribution = mapOf(
                 1 to 20, 2 to 15, 3 to 50, 4 to 100, 5 to 200,
                 6 to 300, 7 to 500, 8 to 800, 9 to 600, 10 to 400
             )
         ),
-        Anime(
-            id = 3,
-            title = "Blue lock",
-            description = "эксцентричного футбольного тренера Дзимпати Эго нанимают в японскую футбольную ассоциацию, чтобы он собрал самую сильную сборную за всю историю страны. Эго уверен, что среди футболистов очень сложно найти хорошего нападающего, поэтому организовывает лагерь-тюрьму Блю Лок, где 300 футболистов начинают сражаться за право быть частью национальной сборной. Победивший становится нападающим, а проигравший получает пожизненный запрет на игру в сборной.",
-            genres = listOf("Экшен", "Спорт", "Комедия"),
-            rating = 8.7,
-            year = 2022,
-            episodes = 24,
-            imageResId = R.drawable.bluelock,
-            ratingsDistribution = mapOf(
-                1 to 10, 2 to 20, 3 to 40, 4 to 80, 5 to 160,
-                6 to 320, 7 to 640, 8 to 500, 9 to 300, 10 to 200
-            )
-        ),
-        Anime(
-            id = 4,
-            title = "Я переродился торговым автоматом",
-            description = "Поклонник торговых автоматов встречает свою смерть на дороге — по иронии судьбы на него падает любимое творение. Открыв глаза в другом мире, главный герой обнаруживает, что не может пошевелить руками и ногами, не способен вымолвить ни слова, кроме заранее записанных фраз… Он сам стал торговым автоматом! Для того, чтобы выжить, Боксо требуются монеты. Еле избежав гибели от лап чудовищ, он встречает юную охотницу по имени Ламмис, которая по достоинству оценивает новое благо цивилизации и хочет показать автомат людям.",
-            genres = listOf("Исэкай", "Фэнтези", "Комедия"),
-            rating = 4.1,
-            year = 2024,
-            episodes = 12,
-            imageResId = R.drawable.chto,
-            ratingsDistribution = mapOf(
-                1 to 300, 2 to 200, 3 to 150, 4 to 100, 5 to 50,
-                6 to 30, 7 to 20, 8 to 10, 9 to 5, 10 to 2
-            )
-        ),
-        Anime(
-            id = 5,
-            title = "Провожающая в последний путь Фрирен",
-            description = "Волшебница-эльфийка Фрирен — одна из тех, кто сразил короля демонов и помог восстановить гармонию в разрушенном мире. После победы над злом четверка приключенцев — кроме Фрирен это дворф Эйсен и люди Химмель и Хайтер — договорилась о новой встрече в будущем. Точкой отсчета решили выбрать метеоритный дождь, который случается раз в полвека. Когда наступает нужная дата, почти не изменившаяся Фрирен встречает Химмеля на пороге смерти и понимает, что знает о напарниках слишком мало. Это толкает ее в новое путешествие, целью которого становится попытка лучше понять своих товарищей и разобраться с тем, что для нее на самом деле значат годы, проведенные вместе.",
-            genres = listOf("Приключения", "Фэнтези", "Комедия"),
-            rating = 8.7,
-            year = 2024,
-            episodes = 12,
-            imageResId = R.drawable.friren,
-            ratingsDistribution = mapOf(
-                1 to 19, 2 to 200, 3 to 150, 4 to 100, 5 to 700,
-                6 to 400, 7 to 800, 8 to 900, 9 to 900, 10 to 1000
-            )
-        ),
-        Anime(
-            id = 6,
-            title = "Сага о Винланде",
-            description = "«Сага о Винланде» — одна из самых популярных манг современности, которую успешно экранизировали. Первый сезон аниме вышел летом 2019-го и покорил зрительские топы лучших сериалов, а вот продолжения пришлось ждать долгих три с половиной года.\n" +
-                    "\n" +
-                    "Cюжет посвящен мести сына за смерть отца-викинга. ",
-            genres = listOf("Приключения", "Боевик", "Япония"),
-            rating = 9.0,
-            year = 2019,
-            episodes = 25,
-            imageResId = R.drawable.vinland_saga,
-            ratingsDistribution = mapOf(
-                1 to 19, 2 to 200, 3 to 150, 4 to 60, 5 to 100,
-                6 to 400, 7 to 800, 8 to 790, 9 to 800, 10 to 1000
-            )
-        ),
-        Anime(
-            id = 7,
-            title = "Монстр",
-            description = "Один день изменил жизнь доктора Кэндзо Тэнмы, гениального японского хирурга, прибывшего в Германию для работы в госпитале «Эйслер Мемориал». В этот день он понял, что человеческие жизни равноценны, и что сама человеческая жизнь стоит больше, чем выгода, которую можно получить за её спасение.\n" +
-                    "\n" +
-                    "В этот день он спас мальчика, получившего огнестрельное ранение в голову во время убийства его родителей. Через некоторое время произошло ещё три убийства, и доктор Тэнма стал главой хирургического отделения госпиталя. В суматохе этих дней выживший после великолепной операции, проведённой нашим Айболитом, мальчик и его сестра-близнец бесследно исчезли из больницы.",
-            genres = listOf("Приключения", "Боевик", "Япония"),
-            rating = 8.6,
-            year = 2004,
-            episodes = 75,
-            imageResId = R.drawable.monster,
-            ratingsDistribution = mapOf(
-                1 to 19, 2 to 200, 3 to 150, 4 to 60, 5 to 100,
-                6 to 400, 7 to 800, 8 to 790, 9 to 800, 10 to 600
-            )
-        )
     )
-    //override fun getAnimeList(): List<Anime> = animeList
-    //override fun getAnimeById(id: Int): Anime? = animeList.find { it.id == id }
 
     private fun shouldThrowError(): Boolean = Random.nextFloat() < 0.3f
 
     override suspend fun getAnimeList(): List<Anime> {
-        delay(3000)
+        delay(1)
         if (shouldThrowError()) {
             throw Exception("Ошибка загрузки списка аниме")
         }
@@ -125,17 +100,94 @@ object MockAnimeRepository : AnimeRepository {
     }
 
     override suspend fun getAnimeById(id: Int): Anime? {
-        delay(2000)
+        delay(1)
         if (shouldThrowError()) {
             throw Exception("Ошибка загрузки деталей аниме")
         }
         return animeList.find { it.id == id }
     }
-    suspend fun searchAnime(query: String): List<Anime> {
-        delay(1000) 
-        if (shouldThrowError()) throw Exception("Ошибка поиска")
-        if (query.isBlank()) return emptyList()
-        return animeList.filter { it.title.contains(query, ignoreCase = true) }
+
+
+
+    override suspend fun getRecommendations(animeId: Int, page: Int, pageSize: Int): List<Anime> {
+        val allRecommendations = animeList.filter { it.id != animeId }.shuffled()
+        val fromIndex = (page - 1) * pageSize
+        if (fromIndex >= allRecommendations.size) return emptyList()
+        val toIndex = minOf(fromIndex + pageSize, allRecommendations.size)
+        return allRecommendations.subList(fromIndex, toIndex)
+
+    }
+
+    override suspend fun getPopularAnime(page: Int): List<Anime> {
+        val jikanList = JikanApi.service.getTopAnime(page).data
+        return jikanList.map { dto ->
+            Anime(
+                id = dto.malId,
+                title = dto.title,
+                description = dto.synopsis ?: "",
+                imageResId = 0,
+                imageUrl = dto.images.jpg.imageUrl ?: "",
+                genres = emptyList(),
+                rating = dto.score ?: 0.0,
+                year = 0,
+                episodes = 0,
+                ratingsDistribution = emptyMap()
+            )
+        }
     }
 
 }
+
+// Retrofit API и DTO остаются без изменений
+interface JikanApiService {
+    @GET("top/anime")
+    suspend fun getTopAnime(@Query("page") page: Int = 1): JikanTopAnimeResponse
+    @GET("anime/{id}/full")
+    suspend fun getAnimeDetails(@Path("id") id: Int): JikanAnimeDetailsResponse
+}
+
+@JsonClass(generateAdapter = true)
+data class JikanTopAnimeResponse(val data: List<JikanAnimeDto>)
+
+@JsonClass(generateAdapter = true)
+data class JikanAnimeDto(
+    @Json(name = "mal_id") val malId: Int,
+    val title: String,
+    val synopsis: String?,
+    val score: Double?,
+    val images: JikanImagesDto
+)
+
+@JsonClass(generateAdapter = true)
+data class JikanImagesDto(val jpg: JikanImageUrlDto)
+
+@JsonClass(generateAdapter = true)
+data class JikanImageUrlDto(@Json(name = "image_url") val imageUrl: String?)
+
+object JikanApi {
+    val service: JikanApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl("https://api.jikan.moe/v4/")
+            .addConverterFactory(MoshiConverterFactory.create())
+            .build()
+            .create(JikanApiService::class.java)
+    }
+}
+@JsonClass(generateAdapter = true)
+data class JikanAnimeDetailsResponse(val data: JikanAnimeDetailsDto)
+
+@JsonClass(generateAdapter = true)
+data class JikanAnimeDetailsDto(
+    @Json(name = "mal_id") val malId: Int,
+    val title: String,
+    val synopsis: String?,
+    val score: Double?,
+    val year: Int?,
+    val episodes: Int?,
+    val genres: List<JikanGenreDto>?,
+    val images: JikanImagesDto
+)
+
+@JsonClass(generateAdapter = true)
+data class JikanGenreDto(val name: String)
+
